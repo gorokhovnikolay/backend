@@ -1,45 +1,52 @@
-const yargs = require("yargs");
-const pkg = require("./package.json");
-const { addNotes, presentList, removeNotes } = require("./notes.controller");
+const express = require("express");
+const chalk = require("chalk");
+const path = require("path");
+const {
+  addNotes,
+  getNotes,
+  removeNotes,
+  editNotes,
+} = require("./notes.controller");
 
-yargs.version(pkg.version);
+const basePath = path.join(__dirname, "site");
+const port = 3000;
 
-yargs.command({
-  command: "add",
-  describe: "Add note",
-  builder: {
-    title: {
-      type: "string",
-      describe: "Note title",
-      demandOption: true,
-    },
-  },
-  handler({ title }) {
-    addNotes(title);
-  },
+const app = express();
+
+app.set("view engine", "ejs");
+app.set("views", "site");
+
+app.use(express.static(path.resolve(__dirname, "public")));
+app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
+
+app.get("/", async (req, res) => {
+  res.render("index", {
+    title: "Express notes",
+    notes: await getNotes(),
+  });
+});
+app.post("/", async (req, res) => {
+  await addNotes(req.body.title);
+  res.render("index", { title: "Express notes", notes: await getNotes() });
+});
+app.delete("/:id", async (req, res) => {
+  const id = req.params.id;
+  removeNotes(id);
+  res.render("index", { title: "Express notes", notes: await getNotes() });
 });
 
-yargs.command({
-  command: "remove",
-  describe: "Remove note",
-  builder: {
-    id: {
-      type: "string",
-      describe: "Note id",
-      demandOption: true,
-    },
-  },
-  handler({ id }) {
-    removeNotes(id);
-  },
+app.put("/:id", async (req, res) => {
+  const id = req.params.id;
+  console.log(req.body);
+  editNotes(req.body);
+  res.render("index", { title: "Express notes", notes: await getNotes() });
 });
 
-yargs.command({
-  command: "list",
-  describe: "List note",
-  async handler() {
-    await presentList();
-  },
+app.listen(3000, () => {
+  console.log(`Server start, port ${port}`);
 });
-
-yargs.parse();
