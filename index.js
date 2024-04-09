@@ -30,6 +30,7 @@ app.get("/", async (req, res) => {
     notes: await getNotes(),
   });
 });
+
 app.post("/", async (req, res) => {
   await addNotes(req.body.title);
   res.render("index", { title: "Express notes", notes: await getNotes() });
@@ -41,9 +42,7 @@ app.delete("/:id", async (req, res) => {
 });
 
 app.put("/:id", async (req, res) => {
-  const id = req.params.id;
-  console.log(req.body);
-  editNotes(req.body);
+  await editNotes(req.body);
   res.render("index", { title: "Express notes", notes: await getNotes() });
 });
 
